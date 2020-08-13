@@ -226,5 +226,50 @@ def download_one(cc,semaphore):
 
 run_in_executor方法的第一个参数是Executor实例；如果设为None，使用事件循环的默认ThreadPoolExecutor实例。余下的参数是可调用的对象以及参数。
 
+``` python3
+# -*- coding: utf-8 -*-
+
+import tqdm
+import asyncio
+import aiohttp
+
+BASE_URL='http://flupy.org/data/flags'
+CC=['CN','IN','US','ID','BR','PK','NG','BD','RU','JP','MX',    'PH','VN','ET','EG','DE','IR','TR','CD''FR']
+
+def save_flag(cc, image):
+    with open(f'CC/{cc}.gif', 'wb') as f:
+        f.write(image.encode())
+
+async def get_flag(cc, semaphore):
+    url = f'{BASE_URL}/{cc}/{cc}.gif'
+    async with semaphore:
+        session =  aiohttp.ClientSession()
+        resp = await session.get(url)
+        image = await resp.text()
+        await session.close()
+        return image
+
+async def download_one(cc, semaphore):
+    image = await get_flag(cc.lower(), semaphore)
+    # print(cc, end=' ')
+    loop.run_in_executor(None, save_flag, cc, image)
+    return cc
+
+async def coro():
+    semaphore = asyncio.Semaphore(20)
+    todo = [download_one(cc, semaphore)for cc in CC]
+    item = asyncio.as_completed(todo)
+    rets = []
+    for future in tqdm.tqdm(item, total=len(todo)):
+        res = await future
+        rets.append(res)
+    return  rets
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    res = loop.run_until_complete(coro())
+    loop.close()
+    print(len(res))
+```
 
 not end...
