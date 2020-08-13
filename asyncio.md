@@ -30,7 +30,7 @@ def spin(msg):
 
 @asyncio.coroutine
 def supervisor():
-    spinner=asyncio.async(spin('thinking!')) #8
+    spinner=asyncio.create_task(spin('thinking!')) #8
     print('spinner object:',spinner)
     result=yield from slow_function()
     spinner.cancel() #11
